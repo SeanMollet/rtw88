@@ -769,7 +769,9 @@ static int download_firmware_validate(struct rtw_dev *rtwdev)
 
 	if (!check_hw_ready(rtwdev, REG_MCUFW_CTRL, FW_READY_MASK, FW_READY))
 	{
-		printk("check_hw_ready failed\n");
+		u32 regVal = rtw_read32_mask(rtwdev, REG_MCUFW_CTRL, FW_READY_MASK);
+
+		printk("check_hw_ready failed %x\n", regVal);
 
 		fw_key = rtw_read32(rtwdev, REG_FW_DBG7) & FW_KEY_MASK;
 		if (fw_key == ILLEGAL_KEY_GROUP)
