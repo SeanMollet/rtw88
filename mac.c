@@ -796,7 +796,10 @@ static void download_firmware_end_flow(struct rtw_dev *rtwdev)
 	/* Check IMEM & DMEM checksum is OK or not */
 	fw_ctrl = rtw_read16(rtwdev, REG_MCUFW_CTRL);
 	if ((fw_ctrl & BIT_CHECK_SUM_OK) != BIT_CHECK_SUM_OK)
+	{
+		printk("Downloaded firmware failed checksum verification\n");
 		return;
+	}
 
 	fw_ctrl = (fw_ctrl | BIT_FW_DW_RDY) & ~BIT_MCUFWDL_EN;
 	rtw_write16(rtwdev, REG_MCUFW_CTRL, fw_ctrl);
@@ -835,17 +838,18 @@ static int __rtw_download_firmware(struct rtw_dev *rtwdev,
 
 	wlan_cpu_enable(rtwdev, true);
 
-	if (!ltecoex_reg_write(rtwdev, 0x38, ltecoex_bckp))
-	{
-		printk("rtx_88 failed in ltecoex_reg_write\n");
-		ret = -EBUSY;
-		goto dlfw_fail;
-	}
-
 	ret = download_firmware_validate(rtwdev);
 	if (ret)
 	{
 		printk("rtx_88 failed in download_firmware_validate\n");
+		goto dlfw_fail;
+	}
+
+	// Realtek does this after the validate step
+	if (!ltecoex_reg_write(rtwdev, 0x38, ltecoex_bckp))
+	{
+		printk("rtx_88 failed in ltecoex_reg_write\n");
+		ret = -EBUSY;
 		goto dlfw_fail;
 	}
 
