@@ -794,15 +794,15 @@ static int __rtw_download_firmware(struct rtw_dev *rtwdev,
 
 	wlan_cpu_enable(rtwdev, true);
 
-	if (!ltecoex_reg_write(rtwdev, 0x38, ltecoex_bckp)) {
-		ret = -EBUSY;
-		goto dlfw_fail;
-	}
-
 	ret = download_firmware_validate(rtwdev);
 	if (ret)
 		goto dlfw_fail;
 
+	if (!ltecoex_reg_write(rtwdev, 0x38, ltecoex_bckp)) {
+		ret = -EBUSY;
+		goto dlfw_fail;
+	}
+	
 	/* reset desc and index */
 	rtw_hci_setup(rtwdev);
 
