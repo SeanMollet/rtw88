@@ -439,8 +439,10 @@ static bool check_firmware_size(const u8 *data, u32 size)
 	emem_size += emem_size ? FW_HDR_CHKSUM_SIZE : 0;
 	real_size = FW_HDR_SIZE + dmem_size + imem_size + emem_size;
 	if (real_size != size)
+	{
+		pr_err("Size mismatch: size %d, real_size %d\n", size, real_size);
 		return false;
-
+	}
 	return true;
 }
 
@@ -707,7 +709,10 @@ download_firmware_to_mem(struct rtw_dev *rtwdev, const u8 *data,
 	}
 
 	if (!check_fw_checksum(rtwdev, dst))
+	{
+		rtw_err(rtwdev, "Firmware checksum failed\n");
 		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -815,10 +820,16 @@ static int __rtw_download_firmware(struct rtw_dev *rtwdev,
 	int ret;
 
 	if (!check_firmware_size(data, size))
+	{
+		rtw_err(rtwdev, "Firmware size of %d is incorrect\n", size);
 		return -EINVAL;
+	}
 
 	if (!ltecoex_read_reg(rtwdev, 0x38, &ltecoex_bckp))
+	{
+		rtw_err(rtwdev, "Routine ltecoex_read_reg failed\n");
 		return -EBUSY;
+	}
 
 	wlan_cpu_enable(rtwdev, false);
 
