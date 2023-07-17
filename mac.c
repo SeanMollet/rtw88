@@ -852,7 +852,17 @@ static int __rtw_download_firmware(struct rtw_dev *rtwdev,
 	ret = download_firmware_validate(rtwdev);
 	if (ret)
 	{
-		printk("rtx_88 failed in download_firmware_validate\n");
+		printk("rtx_88 failed in download_firmware_validate\nSupport information:");
+
+		for (int i = 0; i < 50; i++)
+		{
+			u32 first = rtw_read32(rtwdev, REG_MCUTST_II);
+			u32 second = rtw_read32(rtwdev, REG_FW_DBG7);
+			printk("rtx_88 %d/50 0x1C4: %x, 0x10FC: %x\n", i, first, second);
+
+			udelay(1000);
+		}
+
 		goto dlfw_fail;
 	}
 
