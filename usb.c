@@ -15,6 +15,7 @@
 #include "usb.h"
 
 #define RTW_USB_MAX_RXQ_LEN	512
+static void rtw_usb_write(struct rtw_dev *rtwdev, u32 addr, u32 val, int len);
 
 struct rtw_usb_txcb {
 	struct rtw_dev *rtwdev;
@@ -31,6 +32,17 @@ static void rtw_usb_fill_tx_checksum(struct rtw_usb *rtwusb,
 	le32p_replace_bits(&tx_desc->w7, agg_num, RTW_TX_DESC_W7_DMA_TXAGG_NUM);
 	pkt_info.pkt_offset = le32_get_bits(tx_desc->w1, RTW_TX_DESC_W1_PKT_OFFSET);
 	rtw_tx_fill_txdesc_checksum(rtwdev, &pkt_info, skb->data);
+}
+
+static void rtw_usb_io_error_check(struct rtw_dev *rtwdev, u32 addr)
+{
+	if (rtwdev->chip->id != RTW_CHIP_TYPE_8822C &&
+	    rtwdev->chip->id != RTW_CHIP_TYPE_8822B &&
+	    rtwdev->chip->id != RTW_CHIP_TYPE_8821C)
+		return;
+
+	if (addr <= 0xff || (addr >= 0x1000 && addr <= 0x10ff))
+		rtw_usb_write(rtwdev, 0x4e0, 0, 1);
 }
 
 static u32 rtw_usb_read(struct rtw_dev *rtwdev, u32 addr, u16 len)
@@ -57,6 +69,8 @@ static u32 rtw_usb_read(struct rtw_dev *rtwdev, u32 addr, u16 len)
 	if (ret < 0 && ret != -ENODEV && count++ < 4)
 		rtw_err(rtwdev, "read register 0x%x failed with %d\n",
 			addr, ret);
+
+	rtw_usb_io_error_check(rtwdev, addr);
 
 	return le32_to_cpu(*data);
 }
